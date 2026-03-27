@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Inspección de Calidad - Módulos Separados</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- jsPDF para generación de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-row">
+            <div class="field full-width">
+                <label>Client Name</label>
+                <input id="hdrClientName" type="text" value="Dish Duer">
+            </div>
+            <div class="field"><label>Inspection Nº</label><input id="hdrInspNum" type="text"></div>
+            <div class="field"><label>Report Date</label><input id="hdrReportDate" type="date"></div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div id="moduleA" class="app-module active">
+            <section class="card">
+                <div class="card-title">A. GENERAL</div>
+
+                <div class="field"><label>Vendor/Supplier Name</label>
+                    <select>
+                        <option>Cofaco Industries SAC</option>
+                        <option>Garment Industries SAC</option>
+                    </select>
+                </div>
+                <div class="field"><label>MMS Vendor Code</label>
+                    <select>
+                        <option>Cofaco Industries SAC</option>
+                        <option>Garment Industries SAC</option>
+                    </select>
+                </div>
+                <div class="field"><label>Factory Name</label>
+                    <select>
+                        <option>Cofaco</option>
+                        <option>Cititex 1</option>
+                        <option>Cititex 2</option>
+                    </select>
+                </div>
+                <div class="field"><label>Style Nº</label><input type="text"></div>
+                <div class="field"><label>Fabric Mill Name</label><select>
+                        <option>Cofaco Industries SAC</option>
+                    </select></div>
+                <div class="field"><label>Main Fabric Article Nº</label><input type="text"></div>
+                <div class="field"><label>Brand</label><select>
+                        <option>Women's</option>
+                        <option>Men's</option>
+                        <option>Accesories</option>
+                    </select></div>
+                <div class="field"><label>Inspection Date</label><input type="date"></div>
+                <div class="field"><label>Inspection Location</label><input type="text"></div>
+                <div class="field"><label>Season / Year</label><input type="text"></div>
+                <div class="field"><label>P.O. Nº</label><input type="text"></div>
+                <div class="header-row">
+                    <div class="field"><label>Color Desc.</label><input type="text"></div>
+                    <div class="field"><label>Color Code</label><input type="text"></div>
+                </div>
+                <div class="field"><label>Country of Origin</label><select>
+                        <option>Peru</option>
+                        <option>China</option>
+                    </select></div>
+                <div class="field"><label>Protocol Nº</label><input type="text"></div>
+                <div class="field"><label>Ship Date</label><input type="date"></div>
+                <div class="field"><label>Inspector Name</label><input type="text"></div>
+                <div class="field"><label>Service Performed</label><select>
+                        <option>FRI</option>
+                        <option>1st Re-FRI</option>
+                        <option>2nd Re-FRI</option>
+                    </select></div>
+                <div class="field">
+                    <label>Country of Distribution</label>
+                    <select multiple class="multi-select">
+                        <option>US</option>
+                        <option>Canada</option>
+                        <option>EU</option>
+                        <option>UK</option>
+                    </select>
+                </div>
+            </section>
+            <button class="btn-nav" onclick="goToModule('moduleB')">SIGUIENTE: MÓDULO B</button>
+        </div>
+
+        <div id="moduleB" class="app-module">
+            <section class="card" style="border: 2px solid var(--primary);">
+                <div class="card-title">B. INSPECTION OVERALL RESULT SUMMARY</div>
+
+                <div class="field">
+                    <label style="color:var(--primary)">1. OVERALL RESULT</label>
+                    <select id="resGlobal" onchange="checkPending()">
+                        <option value="" disabled selected>Seleccione...</option>
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                        <option value="PENDING">PENDING FOR CLIENT</option>
+                    </select>
+                </div>
+                <div id="boxPending" class="field hidden">
+                    <label>Due to:</label>
+                    <textarea rows="2" placeholder="Motivo del pendiente..."></textarea>
+                </div>
+
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
+                <div id="checkListModuleB"></div>
+            </section>
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleA')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleC')">SIGUIENTE: MÓDULO C</button>
+        </div>
+
+        <div id="moduleC" class="app-module">
+            <section class="card">
+                <div class="card-title">C. REMARKS</div>
+                <div class="field"><label>Workmanship Defectives</label><input type="number" id="workmanship" value="0"
+                        min="0" oninput="calculateRejectTotal()"></div>
+                <div class="field"><label>Measurements Defectives</label><input type="number" id="measurements"
+                        value="0" min="0" oninput="calculateRejectTotal()"></div>
+                <div class="field"><label>On-site Defectives</label><input type="number" id="onsite" value="0" min="0"
+                        oninput="calculateRejectTotal()"></div>
+                <div class="field">
+                    <label style="color: var(--primary);">Reject Goods Quantity (TOTAL)</label>
+                    <input type="text" id="totalReject" class="total-box" value="0" readonly>
+                </div>
+                <div class="field"><label>Additional Remarks / Observations</label><textarea rows="4"></textarea></div>
+            </section>
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleB')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleD')">SIGUIENTE: MÓDULO D</button>
+        </div>
+
+        <div id="moduleD" class="app-module">
+            <section class="card">
+                <div class="card-title">D. QUANTITY</div>
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Ingrese los datos por cada P.O. Puede
+                    agregar múltiples P.O. usando el botón inferior.</p>
+
+                <div id="po-container">
+                    <div class="po-block">
+                        <div class="po-header">Registro de P.O. #1</div>
+                        <div class="field"><label>P.O. Nº</label><input type="text" placeholder="Alfanumérico"></div>
+                        <div class="field"><label>Item / Style / Product Nº</label><input type="text"
+                                placeholder="Alfanumérico"></div>
+                        <div class="header-row">
+                            <div class="field"><label>Order Qty Units</label><input type="text"
+                                    placeholder="Alfanumérico"></div>
+                            <div class="field"><label>Shipment Qty Units</label><input type="text"
+                                    placeholder="Alfanumérico"></div>
+                        </div>
+                        <div class="field"><label>Shipment Qty Ctns</label><input type="text"
+                                placeholder="Alfanumérico"></div>
+                        <div class="header-row">
+                            <div class="field"><label>Units Packed in Cartons (Qty)</label><input type="text"
+                                    placeholder="Alfanumérico"></div>
+                            <div class="field"><label>Units Packed in Cartons (%)</label><input type="text"
+                                    placeholder="Alfanumérico"></div>
+                        </div>
+                        <div class="field"><label>List of Export Carton Numbers Opened</label><textarea rows="2"
+                                placeholder="Ej: 01-05-08-11-12"></textarea></div>
+                    </div>
+                </div>
+
+                <button class="btn-nav btn-outline" onclick="addNextPO()">+ AGREGAR SIGUIENTE P.O.</button>
+            </section>
+
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleC')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleE')">SIGUIENTE: MÓDULO E</button>
+        </div>
+
+        <div id="moduleE" class="app-module">
+            <section class="card">
+                <div class="card-title">E. WORKMANSHIP (Basic Function & Appearance)</div>
+
+                <div class="field">
+                    <label>Inspection Standard</label>
+                    <input type="text" value="ANSI/ASQ Z1.4 (formerly known as MIL-STD-105E)" readonly>
+                </div>
+
+                <div class="header-row">
+                    <div class="field">
+                        <label>Inspection Level</label>
+                        <select>
+                            <option>I</option>
+                            <option>II</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Sampling Plan</label>
+                        <select>
+                            <option>Single/Normal</option>
+                            <option>Double</option>
+                            <option>Multiple</option>
+                            <option>Reduced</option>
+                            <option>Expanded</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>AQL Critical Defectives</label>
+                    <input type="text" value="Not allowed" readonly>
+                </div>
+
+                <div class="header-row">
+                    <div class="field">
+                        <label>AQL Major Defectives</label>
+                        <select>
+                            <option>1</option>
+                            <option>1.5</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>AQL Minor Defectives</label>
+                        <select>
+                            <option>0.5</option>
+                            <option>1</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Sample Size</label>
+                    <input type="text" placeholder="Alfanumérico (ej: 125)">
+                </div>
+
+                <div class="card-title" style="margin-top: 25px;">Defective Description</div>
+
+                <div id="defects-container">
+                    <div class="dynamic-block defect-block">
+                        <div class="block-header">Defecto #1</div>
+                        <div class="header-row">
+                            <div class="field"><label>P.O. Nº</label><input type="text" placeholder="Alfanumérico">
+                            </div>
+                            <div class="field"><label>Sample Size</label><input type="text" placeholder="Alfanumérico">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Type of Defective</label>
+                            <select>
+                                <option>Untrimmed threads</option>
+                                <option>Embellishment</option>
+                                <option>Hole</option>
+                                <option>Broken/skip stitch</option>
+                                <option>Color shading</option>
+                                <option>Puckering</option>
+                                <option>Cleaness</option>
+                                <option>Asymetrical</option>
+                                <option>Wrong Hangtag</option>
+                                <option>Assorment</option>
+                                <option>Shipping Marks</option>
+                                <option>Measurements</option>
+                                <option>Foreign contamination</option>
+                                <option>Others</option>
+                            </select>
+                        </div>
+                        <div class="header-row">
+                            <div class="field">
+                                <label>Weight</label>
+                                <select class="defect-weight">
+                                    <option value="Critical">Critical</option>
+                                    <option value="Major">Major</option>
+                                    <option value="Minor">Minor</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Quantity</label>
+                                <input type="text" class="defect-qty" placeholder="Alfanumérico">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-nav btn-outline" onclick="addNextDefect()">+ NUEVO DEFECTO</button>
+                <button class="btn-nav btn-success" onclick="finalizeDefects()">FINALIZAR Y CALCULAR</button>
+
+                <div id="results-area" class="dynamic-block hidden"
+                    style="border-color: var(--primary); margin-top: 20px;">
+                    <div class="block-header" style="text-align: center; font-size: 1.1rem;">RESULTADOS</div>
+
+                    <label style="text-align:center;">Suma de Defectos (RESULT)</label>
+                    <div class="result-grid">
+                        <div class="result-item"><span style="color:red; font-size:0.7rem;">CRITICAL</span><br><span
+                                id="resCrit">0</span></div>
+                        <div class="result-item"><span style="color:orange; font-size:0.7rem;">MAJOR</span><br><span
+                                id="resMaj">0</span></div>
+                        <div class="result-item"><span style="color:#0056b3; font-size:0.7rem;">MINOR</span><br><span
+                                id="resMin">0</span></div>
+                    </div>
+
+                    <div class="field">
+                        <label style="color: var(--primary); text-align: center; font-size:0.9rem;">TOTAL SUMA DE
+                            DEFECTOS</label>
+                        <input type="text" id="totalResult" class="total-box" value="0" readonly>
+                    </div>
+
+                    <hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">
+
+                    <div class="field">
+                        <label style="font-size: 0.9rem;">ACCEPTANCE (Límite Aceptado)</label>
+                        <input type="text" id="acceptanceLimit" placeholder="Ingrese cantidad alfanumérica/numérica"
+                            oninput="compareAcceptance()" style="border: 2px solid #555;">
+                    </div>
+
+                    <div id="verdictBox" class="verdict-box verdict-default">
+                        ESPERANDO DATOS...
+                    </div>
+                </div>
+
+            </section>
+
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleD')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleF')">SIGUIENTE: MÓDULO F</button>
+        </div>
+
+        <div id="moduleF" class="app-module">
+            <section class="card">
+                <div class="card-title">F. PACKING & ASSORTMENT</div>
+
+                <div class="block-header">Check Points</div>
+
+                <div class="field">
+                    <label>Description</label>
+                    <input type="text" value="Carton quantity and assortment checking" readonly>
+                </div>
+
+                <div class="field">
+                    <label>Sample Size (cartons)</label>
+                    <input type="text" placeholder="Ej: 05 cartons">
+                </div>
+
+                <div class="field">
+                    <label>Factory equipment current calibration label available?</label>
+                    <select>
+                        <option value="" disabled selected>Seleccione opción...</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="N/A">N/A</option>
+                    </select>
+                </div>
+
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
+                <div class="field">
+                    <label>Findings (Issues Found?)</label>
+                    <select id="findingsF" onchange="calculateResultF()">
+                        <option value="" disabled selected>Seleccione opción...</option>
+                        <option value="Yes">Yes (Se encontraron problemas)</option>
+                        <option value="No">No (Sin problemas)</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Result</label>
+                    <div id="resultBoxF" class="verdict-box verdict-default">
+                        ESPERANDO SELECCIÓN...
+                    </div>
+                </div>
+
+            </section>
+
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleE')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleG')">SIGUIENTE: MÓDULO G</button>
+        </div>
+
+        <div id="moduleG" class="app-module">
+            <section class="card">
+                <div class="card-title">G. ON-SITE TESTS</div>
+                <div class="sub-header">Check Points</div>
+
+                <div class="test-section">
+                    <div class="field">
+                        <label>1. Description</label>
+                        <input type="text" value="Carton weight and dimension measurement" readonly>
+                    </div>
+                    <div class="field">
+                        <label>Sample Size (cartons)</label>
+                        <input type="text" placeholder="Alfanumérico">
+                    </div>
+                    <div class="header-row">
+                        <div class="field">
+                            <label>Test performed with factory equip.?</label>
+                            <select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Calibration label available?</label>
+                            <select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Findings</label>
+                        <select onchange="updateResult(this, 'res1')">
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Yes">Yes (Issues Found)</option>
+                            <option value="No">No (Pass)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Comments</label>
+                        <textarea rows="2" placeholder="Comentarios alfanuméricos"></textarea>
+                    </div>
+                    <div id="res1" class="verdict-box verdict-default">RESULT: PENDING</div>
+                </div>
+
+                <div class="test-section">
+                    <div class="field"><label>2. Description</label><input type="text" value="Color Evaluation"
+                            readonly></div>
+                    <div class="field"><label>Sample Size (units)</label><input type="text"></div>
+                    <div class="header-row">
+                        <div class="field"><label>Test performed factory equip.?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                        <div class="field"><label>Calibration label available?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                    </div>
+                    <div class="field">
+                        <label>Findings</label>
+                        <select onchange="updateResult(this, 'res2')">
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div id="res2" class="verdict-box verdict-default">RESULT: PENDING</div>
+                </div>
+
+                <div class="test-section">
+                    <div class="field"><label>3. Description</label><input type="text" value="Metal detections test"
+                            readonly></div>
+                    <div class="field"><label>Sample Size (units)</label><input type="text"></div>
+                    <div class="header-row">
+                        <div class="field"><label>Test performed factory equip.?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                        <div class="field"><label>Calibration label available?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                    </div>
+                    <div class="field">
+                        <label>Findings</label>
+                        <select onchange="updateResult(this, 'res3')">
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div id="res3" class="verdict-box verdict-default">RESULT: PENDING</div>
+                </div>
+
+                <div class="test-section">
+                    <div class="field"><label>4. Description</label><input type="text" value="Carton drop test"
+                            readonly></div>
+                    <div class="field"><label>Sample Size (dimension)</label><input type="text"></div>
+                    <div class="header-row">
+                        <div class="field"><label>Test performed factory equip.?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                        <div class="field"><label>Calibration label available?</label><select>
+                                <option>Yes</option>
+                                <option>No</option>
+                                <option>N/A</option>
+                            </select></div>
+                    </div>
+                    <div class="field">
+                        <label>Findings</label>
+                        <select onchange="updateResult(this, 'res4')">
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div id="res4" class="verdict-box verdict-default">RESULT: PENDING</div>
+                </div>
+
+            </section>
+
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleF')">ATRÁS</button>
+            <button class="btn-nav" onclick="goToModule('moduleH')">SIGUIENTE: MÓDULO H</button>
+        </div>
+
+        <div id="moduleH" class="app-module">
+            <section class="card">
+                <div class="card-title">H. PHOTOGRAPHS</div>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Captura imágenes como evidencia para el
+                    reporte.</p>
+
+                <!-- Buscar reporte existente -->
+                <div class="field" style="background:#e8f0fe; padding:12px; border-radius:8px; margin-bottom:15px;">
+                    <label>Buscar Reporte Existente</label>
+                    <div style="display:flex; gap:8px;">
+                        <input id="inputBuscarReporte" type="text" placeholder="Ingrese Nº de Reporte" style="flex:1;">
+                        <button class="btn-nav" style="width:auto; padding:10px 16px; margin-top:0;" onclick="buscarReporte()">BUSCAR</button>
+                    </div>
+                    <div id="searchStatus" style="display:none; margin-top:6px; font-size:0.85rem;"></div>
+                </div>
+
+                <div class="camera-box">
+                    <video id="video-preview" class="camera-preview" autoplay playsinline></video>
+                    <canvas id="canvas-preview" class="camera-preview"></canvas>
+
+                    <button id="btn-open-camera" class="btn-nav" onclick="openCamera()">📷 ABRIR CÁMARA / TOMAR
+                        FOTO</button>
+                    <button id="btn-take-photo" class="btn-nav btn-success hidden" onclick="takePhoto()">TOMAR
+                        FOTOGRAFÍA</button>
+                    <button id="btn-retake-photo" class="btn-nav btn-secondary hidden" onclick="retakePhoto()">TOMAR DE
+                        NUEVO</button>
+                </div>
+
+                <div class="field">
+                    <label>Título de la Fotografía</label>
+                    <input id="photoTitle" type="text" placeholder="Ej: Defecto en cuello frontal - P.O. 12903">
+                </div>
+
+                <!-- Galería de fotos capturadas -->
+                <div id="photo-gallery" style="margin-top:10px;"></div>
+
+                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+
+                <div class="field">
+                    <label>Comments / Additional Notes</label>
+                    <textarea id="finalComments" rows="4"
+                        placeholder="Ingrese observaciones o comentarios finales del reporte..."></textarea>
+                </div>
+
+            </section>
+
+            <!-- Panel de Resumen Final (oculto por defecto) -->
+            <div id="finalSummaryPanel" class="hidden"
+                style="background: #fff; border: 2px solid var(--primary); border-radius: 12px; padding: 20px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,86,179,0.15);">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <div style="font-size:2.5rem;">&#10003;</div>
+                    <div style="font-size:1.2rem; font-weight:bold; color:var(--primary);">REPORTE FINALIZADO</div>
+                </div>
+                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                <div style="font-size:0.85rem; color:#333; line-height:1.8;">
+                    <div
+                        style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f0f0;">
+                        <span
+                            style="font-weight:700; text-transform:uppercase; color:var(--label); font-size:0.7rem;">Report
+                            Reviewer Name</span>
+                        <span style="font-weight:bold; color:#222;">Judith Ramirez</span>
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f0f0;">
+                        <span
+                            style="font-weight:700; text-transform:uppercase; color:var(--label); font-size:0.7rem;">Date</span>
+                        <span id="finalDate" style="font-weight:bold; color:#222;"></span>
+                    </div>
+                    <div
+                        style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f0f0;">
+                        <span
+                            style="font-weight:700; text-transform:uppercase; color:var(--label); font-size:0.7rem;">Client</span>
+                        <span style="font-weight:bold; color:#222;">Dish Duer</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                        <span
+                            style="font-weight:700; text-transform:uppercase; color:var(--label); font-size:0.7rem;">Status</span>
+                        <span style="font-weight:bold; color:var(--success);">SAVED &#10003;</span>
+                    </div>
+                </div>
+                <div id="finalCommentsDisplay"
+                    style="margin-top:15px; background:#f9f9f9; border-radius:8px; padding:12px; font-size:0.85rem; color:#444; display:none;">
+                    <span
+                        style="font-weight:700; text-transform:uppercase; font-size:0.7rem; color:var(--label);">Comments:</span>
+                    <p id="finalCommentsText" style="margin:5px 0 0 0;"></p>
+                </div>
+            </div>
+
+            <button class="btn-nav btn-secondary" onclick="goToModule('moduleG')">ATRÁS</button>
+            <button class="btn-nav btn-outline" onclick="openCamera()">NUEVA FOTO</button>
+            <button id="btn-upload-drive" class="btn-nav btn-success" onclick="descargarPDF()">SUBIR EN DRIVE</button>
+            <button id="btn-nuevo-reporte" class="btn-nav hidden" onclick="nuevoReporte()" style="background:#0056b3;color:#fff;margin-top:10px;font-weight:bold;">📋 NUEVO REPORTE</button>
+        </div>
+
+    </div>
+
+    <!-- Modal de Reportes -->
+    <div id="modalReportes" class="hidden">
+        <div id="modalReportesContent">
+            <div id="modalReportesHeader">
+                <strong>Reportes (F11 - Tabla completa)</strong>
+                <button onclick="cerrarModalReportes()" style="padding:4px 8px;border:none;border-radius:4px;background:#dc3545;color:white;cursor:pointer;">Cerrar</button>
+            </div>
+            <div id="modalReportesBodyWrapper">
+                <div id="modalReportesStatus">Presione F11 para actualizar</div>
+                <input id="modalReporteFiltro" type="text" placeholder="Filtrar por cualquier campo (número, cliente, resultado, etc.)">
+                <div style="overflow:auto;max-height:74vh;">
+                    <table id="modalReportesBody">
+                        <thead>
+                            <tr>
+                                <th>Nº Reporte</th>
+                                <th>Fecha Reporte</th>
+                                <th>Cliente</th>
+                                <th>PO</th>
+                                <th>Color Name</th>
+                                <th>Result</th>
+                                <th>Reject Goods Qty</th>
+                                <th>URL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalReportesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/moduleB.js"></script>
+    <script src="js/moduleC.js"></script>
+    <script src="js/moduleD.js"></script>
+    <script src="js/moduleE.js"></script>
+    <script src="js/moduleF.js"></script>
+    <script src="js/moduleG.js"></script>
+    <script src="js/moduleH.js"></script>
+    <script src="js/pdf.js"></script>
+    <script src="js/drive.js"></script>
+    <script src="js/appscript.js"></script>
+
+</body>
+
+</html>
