@@ -8,17 +8,29 @@ async function buscarReporte() {
         return;
     }
 
-    setSearchStatus('Buscando en servidor...', '#0056b3');
-
     try {
+        setSearchStatus('Buscando reporte finalizado...', '#0056b3');
         const data = await getFromScript({ action: 'getReporte', numReporte: numReporte });
+        
         if (data.success && data.data) {
             cargarDatosEnFormulario(data.data);
             setSearchStatus('Reporte cargado correctamente.', '#28a745');
         } else {
-            // Requerimiento: "traiga todos los datos existntes caso contrario dice no hay datos"
-            setSearchStatus('NO HAY DATOS', '#dc3545');
-            mostrarToast('No se encontró información para este número.', true);
+            // No hay reporte finalizado, BUSCAR BORRADOR EN LA NUBE
+            setSearchStatus('Buscando borrador en la nube...', '#0056b3');
+            const bResp = await callAppsScript({ action: 'getBorrador', numReporte: numReporte });
+            
+            if (bResp && bResp.success && bResp.data) {
+                setSearchStatus('Borrador encontrado.', '#28a745');
+                if (confirm(`Se encontró un borrador avanzado para el reporte Nº ${numReporte}. ¿Deseas cargarlo para continuar la inspección?`)) {
+                    if (typeof restoreDraftFromObject === 'function') {
+                        restoreDraftFromObject(bResp.data);
+                    }
+                }
+            } else {
+                setSearchStatus('NO HAY DATOS', '#dc3545');
+                mostrarToast('No se encontró información ni borradores para este número.', true);
+            }
         }
     } catch (err) {
         setSearchStatus('Error de conexion: ' + err.message);
@@ -273,6 +285,24 @@ async function eliminarReporteUI(numReporte) {
     } catch (err) {
         console.error("Error al eliminar reporte:", err);
         mostrarToast('Error: ' + err.message, true);
+    }
+}
+
+function loadDraft(silencioso = false) {
+    const raw = localStorage.getItem('novo_inspection_draft');
+    if (!raw) return;
+
+    try {
+        const d = JSON.parse(raw);
+        const reportInfo = d.summary ? `${d.summary.client} (Nº ${d.summary.inspNum})` : "la sesión anterior";
+
+        if (!silencioso && !confirm(`¿Deseas recuperar el borrador de ${reportInfo}?`)) {
+            return;
+        }
+
+        restoreDraftFromObject(d);
+    } catch (err) {
+        console.error("Error al cargar borrador:", err);
     }
 }
 
