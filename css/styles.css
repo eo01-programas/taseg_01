@@ -441,17 +441,41 @@ input[readonly] {
     background-color: var(--danger);
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
     transition: background 0.2s;
     text-transform: uppercase;
+    min-height: 44px;
+    min-width: 70px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .btn-delete-photo:hover {
     background-color: #bd2130;
+}
+
+/* Modal de confirmación para eliminar foto */
+.delete-photo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10006;
+    backdrop-filter: blur(4px);
+}
+
+.delete-photo-modal.hidden {
+    display: none;
 }
 
 @media (min-width: 500px) {
