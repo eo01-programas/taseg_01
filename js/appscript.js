@@ -212,6 +212,7 @@ function renderizarTablaReportes(datos) {
     tableBody.innerHTML = '';
     datos.forEach(item => {
         const tr = document.createElement('tr');
+        tr.id = `row-report-${item.numReporte}`; // ID para identificar la fila
         tr.innerHTML = `
             <td>${item.numReporte || ''}</td>
             <td>${item.fechaReporte || ''}</td>
@@ -231,12 +232,16 @@ function renderizarTablaReportes(datos) {
 
 // Función para manejar la eliminación desde la UI
 async function eliminarReporteUI(numReporte) {
-    if (!numReporte || numReporte === '-') {
-        alert("No se puede eliminar un reporte sin número.");
+    if (!numReporte) {
+        alert("No se puede identificar el reporte para eliminar.");
         return;
     }
 
-    if (!confirm(`¿ESTÁS SEGURO?\nSe eliminará permanentemente el reporte Nº ${numReporte} de la base de datos.`)) {
+    const confirmMsg = (numReporte === '-') 
+        ? "¿ESTÁS SEGURO?\nSe eliminará este registro vacío de la base de datos."
+        : `¿ESTÁS SEGURO?\nSe eliminará permanentemente el reporte Nº ${numReporte} de la base de datos.`;
+
+    if (!confirm(confirmMsg)) {
         return;
     }
 
@@ -249,8 +254,19 @@ async function eliminarReporteUI(numReporte) {
 
         if (response && response.success) {
             mostrarToast('Reporte eliminado con éxito.');
-            // Refrescar la tabla forzando carga del servidor
-            mostrarModalReportes(true);
+            
+            // ELIMINACIÓN VISUAL INSTANTÁNEA
+            const row = document.getElementById(`row-report-${numReporte}`);
+            if (row) {
+                row.style.transition = 'all 0.5s ease';
+                row.style.background = '#ffe5e5';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 500);
+            }
+
+            // Actualizar cache local para que no reaparezca
+            __reportesCache = __reportesCache.filter(r => String(r.numReporte) !== String(numReporte));
+            
         } else {
             throw new Error(response.error || 'Error al intentar eliminar.');
         }
