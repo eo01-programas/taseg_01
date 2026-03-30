@@ -113,7 +113,12 @@ function limpiarFormulario() {
 }
 
 // Nuevo reporte: limpiar todo y volver al módulo A
-function nuevoReporte() {
+function nuevoReporte(confirmar = false) {
+    if (confirmar && !confirm('¿Estás seguro de que deseas limpiar TODOS los datos de la inspección actual? Esta acción no se puede deshacer.')) return;
+
+    // Limpiar borrador de LocalStorage
+    localStorage.removeItem('novo_inspection_draft');
+    
     limpiarFormulario();
 
     // Limpiar todos los inputs, selects y textareas del formulario
