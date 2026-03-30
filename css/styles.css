@@ -462,6 +462,10 @@ input[readonly] {
 }
 
 /* Modal de Guardado y Progreso */
+#savingModal.hidden {
+    display: none;
+}
+
 #savingModal {
     position: fixed;
     top: 0;
