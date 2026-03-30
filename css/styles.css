@@ -460,6 +460,22 @@ input[readonly] {
         margin: 0 auto;
     }
 }
+/* Botón para eliminar reportes en la tabla */
+.btn-delete-report {
+    background-color: transparent;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+
+.btn-delete-report:hover {
+    background-color: #ffeaea;
+    border-color: var(--danger);
+    transform: scale(1.1);
+}
 
 /* Modal de Guardado y Progreso */
 #savingModal.hidden {
