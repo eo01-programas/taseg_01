@@ -536,7 +536,8 @@ async function descargarPDF() {
         let rowStartY = y;
 
         for (let i = 0; i < capturedPhotos.length; i++) {
-            const { dataUrl, title } = capturedPhotos[i];
+            const { dataUrl: dataUrlOrig, title } = capturedPhotos[i];
+            const dataUrl = await compressImage(dataUrlOrig, 600, 0.6);
 
             if (photoCount > 0 && photoCount % 9 === 0) {
                 doc.addPage(); y = 18; drawHeader();
@@ -709,4 +710,26 @@ function showSavingSuccess(datos, driveUrl) {
 
 function closeSavingModal() {
     document.getElementById('savingModal').classList.add('hidden');
+}
+// Función para comprimir imágenes antes de procesar
+async function compressImage(dataUrl, maxWidth = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > maxWidth) {
+                height = (maxWidth * height) / width;
+                width = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
 }
