@@ -1,14 +1,22 @@
 // Lógica para Guardar y Cargar Borradores en LocalStorage (Auto-Save)
 
-function saveDraft() {
+async function saveDraft(manual = false) {
     try {
+        const inspNum = document.getElementById('hdrInspNum').value.trim();
+        const client = document.getElementById('hdrClientName').value.trim();
+        
         const draft = {
             timestamp: new Date().getTime(),
             activeModule: document.querySelector('.app-module.active')?.id || 'moduleA',
+            // Información para el mensaje de recuperación
+            summary: {
+                inspNum: inspNum || 'SIN Nº',
+                client: client || 'SIN CLIENTE'
+            },
             // Datos básicos (Header)
             header: {
-                clientName: document.getElementById('hdrClientName').value,
-                inspNum: document.getElementById('hdrInspNum').value,
+                clientName: client,
+                inspNum: inspNum,
                 reportDate: document.getElementById('hdrReportDate').value
             },
             // Módulo A
@@ -70,21 +78,71 @@ function saveDraft() {
         };
 
         localStorage.setItem('novo_inspection_draft', JSON.stringify(draft));
-        console.log('Borrador auto-guardado localmente.');
+        
+        if (manual) {
+            // MOSTRAR MODAL DE GUARDADO
+            mostrarModalBorrador();
+
+            // GUARDAR EN LA NUBE
+            const resp = await callAppsScript({
+                action: 'guardarBorrador',
+                numReporte: inspNum,
+                datos: draft
+            });
+
+            if (resp && resp.success) {
+                exitoModalBorrador();
+            } else {
+                errorModalBorrador(resp?.error || 'Sin respuesta del servidor');
+            }
+        } else {
+            console.log('Borrador auto-guardado localmente.');
+        }
     } catch (err) {
         console.warn("Error al auto-guardar borrador:", err);
     }
 }
 
-function loadDraft(silencioso = false) {
-    const raw = localStorage.getItem('novo_inspection_draft');
-    if (!raw) return;
+// Funciones para gestionar el modal reutilizable desde Drafts
+function mostrarModalBorrador() {
+    const m = document.getElementById('savingModal');
+    m.classList.remove('hidden');
+    document.getElementById('savingSpinner').classList.remove('hidden');
+    document.getElementById('savingCheck').classList.add('hidden');
+    document.getElementById('savingSummary').classList.add('hidden');
+    document.getElementById('btn-close-saving').classList.add('hidden');
+    
+    document.getElementById('savingTitle').textContent = 'Guardando Borrador...';
+    document.getElementById('savingTitle').style.color = 'var(--primary)';
+    document.getElementById('savingText').textContent = 'Sincronizando con Google Sheets para mayor seguridad.';
+}
 
-    if (!silencioso && !confirm('¿Deseas recuperar la inspección que dejaste pendiente?')) return;
+function exitoModalBorrador() {
+    document.getElementById('savingSpinner').classList.add('hidden');
+    document.getElementById('savingCheck').classList.remove('hidden');
+    document.getElementById('savingTitle').textContent = '¡Borrador Listo! 💾';
+    document.getElementById('savingTitle').style.color = 'var(--success)';
+    document.getElementById('savingText').textContent = 'Tus avances han sido guardados en la nube.';
+    document.getElementById('btn-close-saving').classList.remove('hidden');
+    
+    // Auto-cerrar en 2 segundos
+    setTimeout(() => {
+        if (!document.getElementById('savingModal').classList.contains('hidden')) {
+            closeSavingModal();
+        }
+    }, 2000);
+}
 
+function errorModalBorrador(err) {
+    document.getElementById('savingSpinner').classList.add('hidden');
+    document.getElementById('savingTitle').textContent = 'Error al Sincronizar';
+    document.getElementById('savingTitle').style.color = '#dc3545';
+    document.getElementById('savingText').textContent = 'Se guardó en local, pero no en la nube: ' + err;
+    document.getElementById('btn-close-saving').classList.remove('hidden');
+}
+
+function restoreDraftFromObject(d) {
     try {
-        const d = JSON.parse(raw);
-
         // 1. Restaurar básicos
         document.getElementById('hdrClientName').value = d.header.clientName;
         document.getElementById('hdrInspNum').value = d.header.inspNum;
@@ -92,7 +150,7 @@ function loadDraft(silencioso = false) {
 
         // 2. Restaurar Módulo A
         const aEls = document.querySelectorAll('#moduleA input, #moduleA select');
-        d.moduleA.forEach((val, i) => { if (aEls[i]) aEls[i].value = val; });
+        if (d.moduleA) d.moduleA.forEach((val, i) => { if (aEls[i]) aEls[i].value = val; });
 
         // 3. Restaurar Módulo B
         if (d.resGlobal) {
@@ -101,19 +159,21 @@ function loadDraft(silencioso = false) {
             const textarea = document.querySelector('#boxPending textarea');
             if (textarea) textarea.value = d.pendingReason;
             const bChecks = document.querySelectorAll('#moduleB .check-item select');
-            d.moduleBChecks.forEach((val, i) => { if (bChecks[i]) bChecks[i].value = val; });
+            if (d.moduleBChecks) d.moduleBChecks.forEach((val, i) => { if (bChecks[i]) bChecks[i].value = val; });
         }
 
         // 4. Restaurar Módulo C
-        document.getElementById('workmanship').value = d.moduleCInputs.workmanship;
-        document.getElementById('measurements').value = d.moduleCInputs.measurements;
-        document.getElementById('onsite').value = d.moduleCInputs.onsite;
-        document.getElementById('totalReject').value = d.moduleCInputs.totalReject;
-        document.querySelector('#moduleC textarea').value = d.moduleCInputs.remarks;
+        if (d.moduleCInputs) {
+            document.getElementById('workmanship').value = d.moduleCInputs.workmanship;
+            document.getElementById('measurements').value = d.moduleCInputs.measurements;
+            document.getElementById('onsite').value = d.moduleCInputs.onsite;
+            document.getElementById('totalReject').value = d.moduleCInputs.totalReject;
+            document.querySelector('#moduleC textarea').value = d.moduleCInputs.remarks;
+        }
 
         // 5. Restaurar Módulo D (P.O.s dinámicas)
         const poContainer = document.getElementById('po-container');
-        if (poContainer && d.poData.length > 0) {
+        if (poContainer && d.poData && d.poData.length > 0) {
             poContainer.innerHTML = '';
             poCounter = 0;
             d.poData.forEach((poRow, idx) => {
@@ -125,19 +185,21 @@ function loadDraft(silencioso = false) {
         }
 
         // 6. Restaurar Módulo E (Defectos dinámicos)
-        const eBase = d.moduleEBase;
-        const eInputs = document.querySelectorAll('#moduleE input');
-        const eSelects = document.querySelectorAll('#moduleE select');
-        if (eInputs[0]) eInputs[0].value = eBase.standard;
-        if (eSelects[0]) eSelects[0].value = eBase.level;
-        if (eSelects[1]) eSelects[1].value = eBase.plan;
-        if (eInputs[2]) eInputs[2].value = eBase.sampleSize;
-        if (eSelects[2]) eSelects[2].value = eBase.aqlMaj;
-        if (eSelects[3]) eSelects[3].value = eBase.aqlMin;
-        document.getElementById('acceptanceLimit').value = eBase.acceptance;
+        if (d.moduleEBase) {
+            const eBase = d.moduleEBase;
+            const eInputs = document.querySelectorAll('#moduleE input');
+            const eSelects = document.querySelectorAll('#moduleE select');
+            if (eInputs[0]) eInputs[0].value = eBase.standard;
+            if (eSelects[0]) eSelects[0].value = eBase.level;
+            if (eSelects[1]) eSelects[1].value = eBase.plan;
+            if (eInputs[2]) eInputs[2].value = eBase.sampleSize;
+            if (eSelects[2]) eSelects[2].value = eBase.aqlMaj;
+            if (eSelects[3]) eSelects[3].value = eBase.aqlMin;
+            document.getElementById('acceptanceLimit').value = eBase.acceptance;
+        }
 
         const defContainer = document.getElementById('defects-container');
-        if (defContainer && d.defects.length > 0) {
+        if (defContainer && d.defects && d.defects.length > 0) {
             defContainer.innerHTML = '';
             defectCounter = 0;
             d.defects.forEach((def, idx) => {
@@ -154,26 +216,30 @@ function loadDraft(silencioso = false) {
         }
 
         // 7. Restaurar Módulo F
-        const fInputs = document.querySelectorAll('#moduleF input');
-        const fSelects = document.querySelectorAll('#moduleF select');
-        if (fInputs[1]) fInputs[1].value = d.moduleF.sampleSize;
-        if (fSelects[0]) fSelects[0].value = d.moduleF.calibration;
-        document.getElementById('findingsF').value = d.moduleF.findings;
-        if (typeof calculateResultF === 'function') calculateResultF();
+        if (d.moduleF) {
+            const fInputs = document.querySelectorAll('#moduleF input');
+            const fSelects = document.querySelectorAll('#moduleF select');
+            if (fInputs[1]) fInputs[1].value = d.moduleF.sampleSize;
+            if (fSelects[0]) fSelects[0].value = d.moduleF.calibration;
+            document.getElementById('findingsF').value = d.moduleF.findings;
+            if (typeof calculateResultF === 'function') calculateResultF();
+        }
 
         // 8. Restaurar Módulo G
-        const gSections = document.querySelectorAll('#moduleG .test-section');
-        d.moduleG.forEach((gData, i) => {
-            const sec = gSections[i];
-            if (sec) {
-                sec.querySelectorAll('input')[1].value = gData.sampleSize;
-                sec.querySelectorAll('select')[0].value = gData.equip;
-                sec.querySelectorAll('select')[1].value = gData.calib;
-                sec.querySelectorAll('select')[2].value = gData.findings;
-                if (sec.querySelector('textarea')) sec.querySelector('textarea').value = gData.comments;
-                if (typeof updateResult === 'function') updateResult(sec.querySelectorAll('select')[2], `res${i+1}`);
-            }
-        });
+        if (d.moduleG) {
+            const gSections = document.querySelectorAll('#moduleG .test-section');
+            d.moduleG.forEach((gData, i) => {
+                const sec = gSections[i];
+                if (sec) {
+                    sec.querySelectorAll('input')[1].value = gData.sampleSize;
+                    sec.querySelectorAll('select')[0].value = gData.equip;
+                    sec.querySelectorAll('select')[1].value = gData.calib;
+                    sec.querySelectorAll('select')[2].value = gData.findings;
+                    if (sec.querySelector('textarea')) sec.querySelector('textarea').value = gData.comments;
+                    if (typeof updateResult === 'function') updateResult(sec.querySelectorAll('select')[2], `res${i+1}`);
+                }
+            });
+        }
 
         // 9. Restaurar Fotos
         if (typeof capturedPhotos !== 'undefined') {
@@ -181,11 +247,29 @@ function loadDraft(silencioso = false) {
             if (d.photos) d.photos.forEach(p => capturedPhotos.push(p));
             if (typeof renderGallery === 'function') renderGallery();
         }
-        document.getElementById('finalComments').value = d.finalComments;
+        document.getElementById('finalComments').value = d.finalComments || '';
 
         // Navegar
-        if (typeof goToModule === 'function') goToModule(d.activeModule);
+        if (typeof goToModule === 'function') goToModule(d.activeModule || 'moduleA');
         mostrarToast('¡Progreso recuperado! 🔍');
+    } catch(err) {
+        console.error("Error al restaurar objeto:", err);
+    }
+}
+
+function loadDraft(silencioso = false) {
+    const raw = localStorage.getItem('novo_inspection_draft');
+    if (!raw) return;
+
+    try {
+        const d = JSON.parse(raw);
+        const reportInfo = d.summary ? `${d.summary.client} (Nº ${d.summary.inspNum})` : "la sesión anterior";
+
+        if (!silencioso && !confirm(`¿Deseas recuperar el borrador de ${reportInfo}?`)) {
+            return;
+        }
+
+        restoreDraftFromObject(d);
     } catch (err) {
         console.error("Error al cargar borrador:", err);
     }
@@ -193,23 +277,12 @@ function loadDraft(silencioso = false) {
 
 // Inicialización de auto-guardado
 document.addEventListener('DOMContentLoaded', () => {
-    // Escuchar cambios en cualquier input del body
+    // Escuchar cambios en cualquier input del body para auto-guardado silencioso
     document.body.addEventListener('input', (e) => {
         if (e.target.closest('.app-module') || e.target.closest('header')) {
-            saveDraft();
+            saveDraft(false); // Guardado silencioso automático
         }
     });
 
-    // Cargar borrador automáticamente al iniciar (si existe)
-    setTimeout(() => {
-        const raw = localStorage.getItem('novo_inspection_draft');
-        if (raw) {
-            const d = JSON.parse(raw);
-            const diff = new Date().getTime() - d.timestamp;
-            // Si el borrador tiene menos de 24 horas, preguntar si restaurar
-            if (diff < 24 * 60 * 60 * 1000) {
-                loadDraft();
-            }
-        }
-    }, 1500);
+    // Recuperación automática al inicio desactivada por solicitud del usuario
 });
