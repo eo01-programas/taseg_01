@@ -630,44 +630,83 @@ async function descargarPDF() {
         url: ''
     };
     try {
-        setDriveButtonState(true);
+        showSavingModal();
+        updateSavingProgress('Generando documento PDF...', 'Esto puede tomar unos segundos.');
 
+        const pdfOutput = doc.output('datauristring');
+        const base64 = pdfOutput.split(',')[1];
+        
         // 1. Intentar subir PDF a Google Drive
+        updateSavingProgress('Subiendo PDF a Google Drive...', 'Conectando con el servidor...');
+        
+        let driveUrl = '';
         try {
-            mostrarToast('Subiendo PDF a Drive...');
-            const pdfOutput = doc.output('datauristring');
-            const base64 = pdfOutput.split(',')[1];
             const uploadResult = await guardarPdfEnDriveDesdeApp(inspNum, base64, filename);
-            
             if (uploadResult && uploadResult.url) {
-                datosReporte.url = uploadResult.url;
+                driveUrl = uploadResult.url;
+                datosReporte.url = driveUrl;
             }
         } catch (driveErr) {
-            console.warn('Error al subir PDF a Drive (se continuará con el registro en Sheets):', driveErr);
-            mostrarToast('No se pudo subir PDF a Drive, guardando datos...', true);
+            console.warn('Error en Drive (se intentará registrar solo en Sheets):', driveErr);
         }
 
-        // 2. Registrar el reporte en Sheets (SIEMPRE, aunque Drive falle)
-        mostrarToast('Guardando reporte en Sheets...');
+        // 2. Registrar el reporte en Sheets
+        updateSavingProgress('Registrando inspección en Sheets...', 'Confirmando datos finales...');
         await registrarReporteEnSheets(datosReporte);
         
-        // Mostrar botón de nuevo reporte
-        const btnNuevo = document.getElementById('btn-nuevo-reporte');
-        if (btnNuevo) btnNuevo.classList.remove('hidden');
+        // ÉXITO FINAL
+        showSavingSuccess(datosReporte, driveUrl);
 
-        if (datosReporte.url) {
-            mostrarToast('Reporte y PDF guardados correctamente');
-            mostrarModalConfirmacion('Reporte y PDF guardados correctamente');
-        } else {
-            mostrarToast('Reporte guardado en Sheets (sin PDF en Drive)');
-            mostrarModalConfirmacion('Reporte guardado en Sheets (sin PDF en Drive)');
-        }
     } catch (err) {
-        console.error('No se pudo completar el guardado del reporte:', err);
-        const errText = err && err.message ? err.message : (typeof err === 'string' ? err : 'Error desconocido');
-        mostrarToast('Error al guardar: ' + errText, true);
-        mostrarModalConfirmacion('Error al guardar: ' + errText, true);
-    } finally {
-        setDriveButtonState(false);
+        console.error('Error crítico al guardar:', err);
+        const errMsg = err.message || 'Error desconocido';
+        updateSavingProgress('Error al guardar', errMsg, true);
     }
+}
+
+// Funciones para el Modal de Guardado
+function showSavingModal() {
+    const modal = document.getElementById('savingModal');
+    modal.classList.remove('hidden');
+    document.getElementById('savingSpinner').classList.remove('hidden');
+    document.getElementById('savingCheck').classList.add('hidden');
+    document.getElementById('savingSummary').classList.add('hidden');
+    document.getElementById('btn-close-saving').classList.add('hidden');
+    document.getElementById('savingTitle').textContent = 'Guardando...';
+}
+
+function updateSavingProgress(title, text, isError = false) {
+    document.getElementById('savingTitle').textContent = title;
+    document.getElementById('savingText').textContent = text;
+    if (isError) {
+        document.getElementById('savingSpinner').classList.add('hidden');
+        document.getElementById('btn-close-saving').classList.remove('hidden');
+        document.getElementById('savingTitle').style.color = 'var(--danger)';
+    }
+}
+
+function showSavingSuccess(datos, driveUrl) {
+    document.getElementById('savingSpinner').classList.add('hidden');
+    document.getElementById('savingCheck').classList.remove('hidden');
+    document.getElementById('savingSummary').classList.remove('hidden');
+    document.getElementById('savingTitle').textContent = '¡Reporte Guardado!';
+    document.getElementById('savingTitle').style.color = 'var(--success)';
+    document.getElementById('savingText').textContent = 'La inspección se ha registrado correctamente.';
+    
+    // Rellenar resumen
+    document.getElementById('sumInspNum').textContent = datos.numReporte || 'N/A';
+    document.getElementById('sumClient').textContent = datos.cliente || 'N/A';
+    document.getElementById('sumDate').textContent = datos.fechaReporte || 'HOY';
+    
+    const btnPdf = document.getElementById('btn-sum-pdf');
+    if (driveUrl) {
+        btnPdf.href = driveUrl;
+        btnPdf.style.display = 'block';
+    } else {
+        btnPdf.style.display = 'none';
+    }
+}
+
+function closeSavingModal() {
+    document.getElementById('savingModal').classList.add('hidden');
 }
