@@ -1,5 +1,5 @@
 // URL expuesta por Google Apps Script tras publicar como Web App
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztia5xzYHKlAG56NBlReLQQrdaddyUg7d7LhnB1ed6Bp1eeL1rfLJTIMxmqJj-9tz/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHwOem17FkaibdwWBkziZorhKSNHO_RV5MWWB33rjUq5s7uiand7-rJmo0H8I9QRxh/exec';
 
 async function callAppsScript(payload, timeoutMs = 30000) {
     const controller = new AbortController();
