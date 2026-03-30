@@ -526,8 +526,10 @@
                     <video id="video-preview" class="camera-preview" autoplay playsinline></video>
                     <canvas id="canvas-preview" class="camera-preview"></canvas>
 
+                    <input id="galleryInput" type="file" accept="image/*" multiple style="display:none;" onchange="handleGalleryFiles(this)">
                     <button id="btn-open-camera" class="btn-nav" onclick="openCamera()">📷 ABRIR CÁMARA / TOMAR
                         FOTO</button>
+                    <button id="btn-gallery" class="btn-nav btn-outline" onclick="document.getElementById('galleryInput').click()">🖼️ SELECCIONAR DE GALERÍA</button>
                     <button id="btn-take-photo" class="btn-nav btn-success hidden" onclick="takePhoto()">TOMAR
                         FOTOGRAFÍA</button>
                     <button id="btn-retake-photo" class="btn-nav btn-secondary hidden" onclick="retakePhoto()">TOMAR DE
