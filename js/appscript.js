@@ -221,9 +221,43 @@ function renderizarTablaReportes(datos) {
             <td>${item.result || ''}</td>
             <td>${(item.rejectQty !== undefined && item.rejectQty !== null) ? item.rejectQty : ''}</td>
             <td>${item.url ? '<a href="' + item.url + '" target="_blank" rel="noopener">Abrir PDF</a>' : '---'}</td>
+            <td style="text-align:center;">
+                <button class="btn-delete-report" onclick="eliminarReporteUI('${item.numReporte}')" title="Eliminar Reporte">🗑️</button>
+            </td>
         `;
         tableBody.appendChild(tr);
     });
+}
+
+// Función para manejar la eliminación desde la UI
+async function eliminarReporteUI(numReporte) {
+    if (!numReporte || numReporte === '-') {
+        alert("No se puede eliminar un reporte sin número.");
+        return;
+    }
+
+    if (!confirm(`¿ESTÁS SEGURO?\nSe eliminará permanentemente el reporte Nº ${numReporte} de la base de datos.`)) {
+        return;
+    }
+
+    try {
+        mostrarToast('Eliminando reporte del servidor...');
+        const response = await callAppsScript({
+            action: 'eliminarReporte',
+            numReporte: numReporte
+        });
+
+        if (response && response.success) {
+            mostrarToast('Reporte eliminado con éxito.');
+            // Refrescar la tabla forzando carga del servidor
+            mostrarModalReportes(true);
+        } else {
+            throw new Error(response.error || 'Error al intentar eliminar.');
+        }
+    } catch (err) {
+        console.error("Error al eliminar reporte:", err);
+        mostrarToast('Error: ' + err.message, true);
+    }
 }
 
 function cerrarModalReportes() {
