@@ -16,7 +16,9 @@ async function buscarReporte() {
             cargarDatosEnFormulario(data.data);
             setSearchStatus('Reporte cargado correctamente.', '#28a745');
         } else {
-            setSearchStatus('Error: ' + (data.error || 'Reporte no encontrado'));
+            // Requerimiento: "traiga todos los datos existntes caso contrario dice no hay datos"
+            setSearchStatus('NO HAY DATOS', '#dc3545');
+            mostrarToast('No se encontró información para este número.', true);
         }
     } catch (err) {
         setSearchStatus('Error de conexion: ' + err.message);
