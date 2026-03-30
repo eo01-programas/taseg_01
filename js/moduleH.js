@@ -106,3 +106,23 @@ function retakePhoto() {
     btnRetake.classList.add('hidden');
     openCamera();
 }
+
+function handleGalleryFiles(input) {
+    const files = input.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            const title = document.getElementById('photoTitle').value.trim() || `Fotografía #${capturedPhotos.length + 1}`;
+            capturedPhotos.push({ dataUrl, title });
+            renderGallery();
+            document.getElementById('photoTitle').value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    input.value = '';
+}
