@@ -13,6 +13,16 @@
 <body>
 
     <header>
+        <!-- Buscador Superior solicitado -->
+        <div class="search-top-bar">
+            <div class="field" style="margin-bottom:0; flex:1;">
+                <input id="inputBuscarReporte" type="text" placeholder="Inspection Nº / Reporte...">
+            </div>
+            <button class="btn-lupa" onclick="buscarReporte()" title="Buscar Reporte">🔍</button>
+        </div>
+
+        <div id="searchStatus" style="display:none; margin-bottom:10px; font-size:0.8rem; font-weight:bold; text-align:center;"></div>
+
         <div class="header-row">
             <div class="field full-width">
                 <label>Client Name</label>
@@ -509,15 +519,6 @@
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Captura imágenes como evidencia para el
                     reporte.</p>
 
-                <!-- Buscar reporte existente -->
-                <div class="field" style="background:#e8f0fe; padding:12px; border-radius:8px; margin-bottom:15px;">
-                    <label>Buscar Reporte Existente</label>
-                    <div style="display:flex; gap:8px;">
-                        <input id="inputBuscarReporte" type="text" placeholder="Ingrese Nº de Reporte" style="flex:1;">
-                        <button class="btn-nav" style="width:auto; padding:10px 16px; margin-top:0;" onclick="buscarReporte()">BUSCAR</button>
-                    </div>
-                    <div id="searchStatus" style="display:none; margin-top:6px; font-size:0.85rem;"></div>
-                </div>
 
                 <div class="camera-box">
                     <video id="video-preview" class="camera-preview" autoplay playsinline></video>
@@ -630,6 +631,29 @@
         </div>
     </div>
 
+
+    <!-- Modal de Guardado y Progreso -->
+    <div id="savingModal" class="hidden">
+        <div id="savingModalContent">
+            <div id="savingSpinner" class="spinner"></div>
+            <div id="savingCheck" class="hidden">✔️</div>
+            <h2 id="savingTitle">Guardando...</h2>
+            <p id="savingText">Iniciando proceso de guardado</p>
+            
+            <div id="savingSummary" class="hidden">
+                <hr>
+                <div class="summary-item"><strong>Nº REPORTE:</strong> <span id="sumInspNum">-</span></div>
+                <div class="summary-item"><strong>CLIENTE:</strong> <span id="sumClient">-</span></div>
+                <div class="summary-item"><strong>FECHA:</strong> <span id="sumDate">-</span></div>
+                <hr>
+                <a id="btn-sum-pdf" href="#" target="_blank" class="btn-nav btn-success">📄 ABRIR PDF GUARDADO</a>
+                <button class="btn-nav" onclick="nuevoReporte(); closeSavingModal();" style="background:#0056b3;">📋 NUEVO REPORTE</button>
+            </div>
+            
+            <button id="btn-close-saving" class="btn-nav btn-secondary hidden" onclick="closeSavingModal()">CERRAR</button>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/navigation.js"></script>
@@ -640,6 +664,7 @@
     <script src="js/moduleF.js"></script>
     <script src="js/moduleG.js"></script>
     <script src="js/moduleH.js"></script>
+    <script src="js/drafts.js"></script>
     <script src="js/pdf.js"></script>
     <script src="js/drive.js"></script>
     <script src="js/appscript.js"></script>
