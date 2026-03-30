@@ -1,5 +1,5 @@
 // URL expuesta por Google Apps Script tras publicar como Web App
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHwOem17FkaibdwWBkziZorhKSNHO_RV5MWWB33rjUq5s7uiand7-rJmo0H8I9QRxh/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfWbG-YsCvVP_v-ko1XgirFCSpVlua_n86j3NWmgu95W9MBOvrJWfe-4Y1TqJvmkI7/exec';
 
 async function callAppsScript(payload, timeoutMs = 30000) {
     const controller = new AbortController();
@@ -9,33 +9,18 @@ async function callAppsScript(payload, timeoutMs = 30000) {
         console.log("Iniciando POST a:", SCRIPT_URL, payload);
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // Algunos navegadores requieren esto para POST a dominios distintos si no hay preflight
+            mode: 'cors',
+            redirect: 'follow', // IMPORTANTE para Google Apps Script
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(payload),
             signal: controller.signal
         });
         clearTimeout(timer);
-        // Nota: Con no-cors no podemos leer la respuesta, pero para registrar datos suele bastar.
-        // Sin embargo, como necesitamos el JSON de confirmación, intentamos con cors primero.
-    } catch (err) {}
-
-    // Intento 2: Conexión estándar con lectura de respuesta
-    const controller2 = new AbortController();
-    const timer2 = setTimeout(() => controller2.abort(), timeoutMs);
-    try {
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(payload),
-            signal: controller2.signal
-        });
-        clearTimeout(timer2);
-        return await res.json();
+        return await response.json();
     } catch (err) {
-        clearTimeout(timer2);
+        clearTimeout(timer);
         console.error("Error definitivo en callAppsScript:", err);
-        throw new Error("No se pudo conectar con el servidor (POST).");
+        throw new Error("No se pudo conectar con el servidor (POST). Verifica que el script esté publicado como 'Cualquiera'.");
     }
 }
 
@@ -56,16 +41,16 @@ async function getFromScript(params, timeoutMs = 30000) {
             signal: controller.signal
         });
         clearTimeout(timer);
-        
+
         if (!response.ok) throw new Error("HTTP " + response.status);
-        
+
         const data = await response.json();
         console.log("Datos recibidos:", data);
         return data;
     } catch (err) {
         clearTimeout(timer);
         console.error("Error en getFromScript (GET):", err);
-        
+
         // Intentar un último recurso: Usar un proxy muy simple si el directo falló por CORS
         try {
             const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
