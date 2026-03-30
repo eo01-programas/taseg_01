@@ -58,41 +58,45 @@ function takePhoto() {
 
 function renderGallery() {
     const gallery = document.getElementById('photo-gallery');
-    gallery.innerHTML = ''; // Limpiar previo
+    gallery.innerHTML = '';
 
     capturedPhotos.forEach((photo, index) => {
         const item = document.createElement('div');
         item.style.cssText = 'border:1px solid #ccd0d5;border-radius:8px;padding:8px;margin-bottom:10px;background:#f9f9f9;';
-        
+
         item.innerHTML = `
             <img src="${photo.dataUrl}" style="width:100%;border-radius:6px;margin-bottom:5px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:0.8rem;font-weight:bold;color:#0056b3;max-width:70%;">${photo.title}</div>
-                <button onclick="deletePhoto(${index})" class="btn-delete-photo">BORRAR</button>
-            </div>
+            <div style="font-size:0.8rem;font-weight:bold;color:#0056b3;margin-bottom:8px;word-break:break-word;">${photo.title}</div>
+            <button id="delbtn-${index}" onclick="deletePhoto(${index})" class="btn-delete-photo" style="width:100%;">BORRAR</button>
         `;
         gallery.appendChild(item);
     });
 }
 
-let pendingDeleteIndex = null;
+let confirmDeleteTimeout = null;
 
 function deletePhoto(index) {
-    pendingDeleteIndex = index;
-    document.getElementById('deletePhotoModal').classList.remove('hidden');
-}
+    const btn = document.getElementById('delbtn-' + index);
+    if (!btn) return;
 
-function closeDeletePhotoModal() {
-    document.getElementById('deletePhotoModal').classList.add('hidden');
-    pendingDeleteIndex = null;
-}
-
-function confirmDeletePhoto() {
-    if (pendingDeleteIndex !== null) {
-        capturedPhotos.splice(pendingDeleteIndex, 1);
+    if (btn.dataset.confirm === '1') {
+        clearTimeout(confirmDeleteTimeout);
+        capturedPhotos.splice(index, 1);
         renderGallery();
+        return;
     }
-    closeDeletePhotoModal();
+
+    btn.dataset.confirm = '1';
+    btn.textContent = '¿CONFIRMAR?';
+    btn.style.backgroundColor = '#8B0000';
+
+    confirmDeleteTimeout = setTimeout(() => {
+        if (btn && btn.parentNode) {
+            btn.dataset.confirm = '0';
+            btn.textContent = 'BORRAR';
+            btn.style.backgroundColor = '';
+        }
+    }, 3000);
 }
 
 function retakePhoto() {
